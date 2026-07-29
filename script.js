@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const menuToggle = document.querySelector('.menu-toggle');
   const nav = document.querySelector('.floating-nav nav');
@@ -104,4 +103,59 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('work')?.scrollIntoView();
     }
   });
+
+  // Scroll-triggered reveal animations
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealEls = [...document.querySelectorAll('.reveal')];
+
+  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    revealEls.forEach(el => el.classList.add('is-visible'));
+  } else {
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(el => revealObserver.observe(el));
+  }
+
+  // Soft cursor trail — desktop with a fine pointer only, and only if motion is welcome
+  const canUseCursorTrail = !prefersReducedMotion &&
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (canUseCursorTrail) {
+    const dot = document.createElement('div');
+    dot.className = 'cursor-glow';
+    const trail = document.createElement('div');
+    trail.className = 'cursor-glow trail';
+    document.body.append(trail, dot);
+
+    let mouseX = -100, mouseY = -100;
+    let dotX = -100, dotY = -100;
+    let trailX = -100, trailY = -100;
+    let active = false;
+
+    window.addEventListener('mousemove', event => {
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+      active = true;
+    });
+
+    function animateCursor() {
+      if (active) {
+        dotX += (mouseX - dotX) * 0.35;
+        dotY += (mouseY - dotY) * 0.35;
+        trailX += (mouseX - trailX) * 0.12;
+        trailY += (mouseY - trailY) * 0.12;
+        dot.style.transform = `translate(${dotX - 11}px, ${dotY - 11}px)`;
+        trail.style.transform = `translate(${trailX - 27}px, ${trailY - 27}px)`;
+      }
+      requestAnimationFrame(animateCursor);
+    }
+    requestAnimationFrame(animateCursor);
+  }
 });
